@@ -63,39 +63,60 @@ Desenvolvemos um sistema simples e funcional que **monitora o nível da água em
 
 ```cpp
 #define trigPin 9
-#define echoPin 8
-#define buzzer 10
+#define echoPin 10
 #define ledVerde 2
 #define ledAmarelo 3
 #define ledVermelho 4
-
-long duration;
-float distance;
+#define buzzer 5
 
 void setup() {
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
-  pinMode(buzzer, OUTPUT);
   pinMode(ledVerde, OUTPUT);
   pinMode(ledAmarelo, OUTPUT);
   pinMode(ledVermelho, OUTPUT);
+  pinMode(buzzer, OUTPUT);
   Serial.begin(9600);
 }
 
 void loop() {
-  // Envia pulso ultrassônico
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
   digitalWrite(trigPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
 
-  // Calcula distância
-  duration = pulseIn(echoPin, HIGH);
-  distance = duration * 0.034 / 2;
+  long duracao = pulseIn(echoPin, HIGH);
+  int distancia = duracao * 0.034 / 2;
 
   Serial.print("Distância: ");
-  Serial.print(distance);
+  Serial.print(distancia);
   Serial.println(" cm");
 
-... (40 linhas)
+  if (distancia > 100) {
+    // Nível normal do rio (distância da água ao sensor > 100 cm)
+    // Situação segura — LED verde aceso, os outros desligados
+    digitalWrite(ledVerde, HIGH);
+    digitalWrite(ledAmarelo, LOW);
+    digitalWrite(ledVermelho, LOW);
+    noTone(buzzer);
+
+  } else if (distancia <= 100 && distancia > 50) {
+    // Nível subindo (distância entre 50 e 100 cm)
+    // Situação de alerta — LED amarelo aceso
+    digitalWrite(ledVerde, LOW);
+    digitalWrite(ledAmarelo, HIGH);
+    digitalWrite(ledVermelho, LOW);
+    tone(buzzer, 1000, 250);
+
+  } else {
+    // Enchente (distância da água ao sensor menor que 50 cm)
+    // Situação crítica — LED vermelho aceso e buzzer ativado
+    digitalWrite(ledVerde, LOW);
+    digitalWrite(ledAmarelo, LOW);
+    digitalWrite(ledVermelho, HIGH);
+    tone(buzzer, 500);
+  }
+
+  delay(1000);
+}
